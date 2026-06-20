@@ -1,0 +1,202 @@
+# 基础配置
+basic:
+  # 输入的单张原始图像
+  input_image: ""
+  # 要处理的图像组的文件夹名称 会批量处理该路径下可以处理的所有png 不使用请置为空，否则会忽略单张图像
+  input_images_dir: "" # ../data/emoji/Y
+  # 存放单个结果或者批量结果的最顶层的文件夹(后面不要带/）
+  output_dir: "outputs/emoji/Y"
+  # 期待最后svg的最大基元数量 如果设置的话将会自动分配结构矢量和细节矢量的数量，这两个设置的值会自动失效
+  shape_num:
+  # 配合shape_num使用 期待细节矢量占总矢量的最小比例 默认0.5, 细节越多的值一般比例要越高
+  detail_ratio: 0.5
+  # 结构二级分割
+  double_seg: true
+  # 使用hq sam
+  use_hq_sam: false
+  # 全局的cuda
+  device: "cuda"
+  # 输入图像的透明通道转化成的背景的颜色，sam的背景和损失计算的背景 一般白色就够了，RGBA不需要设置背景
+  bg: "white"
+  # 对png图像的闭运算程度 越大闭运算核越小 细节越多 没有目的不要轻易改
+  base_size: 256
+  # 作者做批量实验用的
+  # 可以为空 默认是"test" 批量实验是"exp"
+  modern: "exp"
+  # 随机种子
+  seed: 0
+  # 实验名称
+  exp_name:
+
+# 优化配置
+optimization:
+  # 优化描边及其颜色
+  stroke_enable: false
+  # 优化停靠点位置
+  offsets_enable: false
+  # gamma 最好就是1.0 不要改了
+  gamma: 1.0
+  # 矢量填充颜色类型 0 无渐变 1 线性渐变 2 径向渐变 3 自适应
+  color_type: 2
+  # 如果使用了渐变请设置停靠点数量 设置为0 情况下自动取1-max_stop_number个停靠点，为1时自动退化为纯色，其他取固定数量个停靠点（n<=max_stop_number)不会退化.
+  stop_number: 2
+  # 直方图识别的最大停靠点数量
+  max_stop_number: 4
+  # 优化的轮次
+  num_iters: 200
+  # 学习率衰变率
+  decay_ratio: 0.9
+  # 限制渐变参数位置
+  clamp_enable: true
+  # 学习率
+  lr:
+    # 控制点学习率
+    points_lr: 0.1
+    # 颜色学习率
+    color_lr: 0.1
+    # 停靠点学习率
+    offsets_lr: 0.1
+    # 线性渐变向量起点学习率
+    begin_lr: 0.1
+    # 线性渐变向量结束点学习率
+    end_lr: 0.1
+    # 描边宽度学习率
+    stroke_width_lr: 0.1
+    # 描边颜色学习率
+    stroke_color_lr: 0.1
+    # 径向渐变半径向量学习率
+    radius_lr: 0.1
+    # 径向渐变中心向量学习率
+    center_lr: 0.1
+  # 损失类型
+  loss:
+    # 支持的视觉像素基础损失：
+    # MSE_RGB
+    # MSE_RGBA(目标必须也是RGBA,否则会使用RGB,并且输入图像的背景将不会处理)
+    base: "MSE_RGB"
+
+# hqsam
+hqsam:
+    model_type: "vit_h"
+    checkpoint_path: "/home/wenhuaszhgc/users/ngx/SAM/segment-anything/models/sam_hq_vit_h.pth"
+# sam配置
+sam:
+  # sam 模型类型
+  model_type: "vit_h"
+  # 模型路径
+  checkpoint_path: "/home/wenhuaszhgc/users/ngx/SAM/segment-anything/models/sam_vit_h_4b8939.pth"
+  # 最大保留的sam掩码的数量
+  mask_num: 2048
+  # sam掩码去重的交并比 默认0.7
+  iou: 0.7
+# unsam
+unsam:
+  use: false
+  weight_path: "/home/wenhuaszhgc/users/ngx/SAM/segment-anything/UnSAM-main/model/unsam_sa1b_4perc_ckpt_200k.pth"
+  config_file: "/home/wenhuaszhgc/users/ngx/SAM/segment-anything/UnSAM-main/whole_image_segmentation/configs/maskformer2_R50_bs16_50ep.yaml"
+potrace:
+  O: 0.2
+  a: 1.0
+vtracer:
+  c: 100
+  s: 80
+  simplify_eps_ratio: 0
+# double_seg
+double_seg:
+  # 整图unsam分割
+  use_unsam_start: true
+  # 一次分割背景是否再分
+  bg_seg: true
+  # 第二次用更细致的sam分割，否则使用unsam
+  second_sam: false
+  # 复制mask
+  copy: true
+  # 去重iou
+  iou: 0.7
+  # 最小mask面积比例
+  min_ratio: 0.0001
+  # 二次分割最小mask面积比例
+  min_seg_ratio: 0.005
+  # mask最小未被覆盖面积比例
+  min_covered_ratio: 0.1
+  # mask最小面积
+  min_area: 4
+  # 二次分割复杂度阈值 大于1 不分割
+  seg_complexity: 99
+#  # mask分割扩展比例
+#  expand_ratio: 0.0
+
+# 细节捕获配置
+detail:
+  # 对差值图像的模糊处理类型：
+  # 1.高斯模糊 "gaussian" 2.双边滤波 "bilateral"
+  # 3.自适应核高斯模糊 "adaptive_gaussian" 4.自适应核双边滤波 "adaptive_bilateral"
+  blur_type: "adaptive_gaussian"
+  # 最大保留细节的mask的数量
+  detail_num: 2048
+  # 保留mask排序时 mask面积的权重
+  area_weight: 0.5
+  # 保留mask排序时 mask周长的权重
+  perimeter_weight: 0.5
+  # 保留mask的最小总面积比例
+  min_area_ratio: 0.00001
+  # 保留mask的最小周长的比例
+  min_perimeter_ratio: 0.00001
+
+# 保存的文件 设置false会清除原文件
+save:
+  # json 保存中间的信息 基本是都要保留的
+  json: true
+  # 细节相关
+  detail:
+    # 捕获的原始细节 包括差值灰度图像 二值细节图像
+    difference: true
+    # 细节轮廓转化成svg的中间 png
+    detail_png: false
+    # 细节轮廓转化成svg的中间 pbm
+    detail_pbm: false
+    # 细节轮廓转化成的svg
+    detail_svg: false
+    # 用于损失计算的目标图像
+    opt_input: true
+    # 细节矢量优化的中间过程的png 每轮都会存
+    intermediate_png: false
+    # 细节矢量优化结果 包括初始化的PNG和SVG
+    res: false
+    # 细节矢量优化的动画
+    opt_mp4: false
+    # 细节矢量优化的中间过程的svg 每20轮存一张
+    intermediate_svg: false
+
+
+  # sam 分割相关
+  sam:
+    # 经过处理之后的目标图像 sam的输入只能是RGB图像 透明会有背景，背景为配置中的bg
+    sam_input: true
+    # 去重后的sam的掩码png
+    sam_mask_png: false
+    # 用于IVVLD的输入和mask叠加在原图上的效果
+    IVVLD: false
+    # 保存所有掩码初始化生成的pbm
+    sam_pbm: false
+    # 保存所有bpm转化的svg
+    sam_svg: false
+
+  double_seg: true
+  # 结构优化相关
+  struc_opt:
+    # 用于损失计算的目标图像
+    opt_input: true
+    # 结构矢量优化的中间过程的png 每轮都会存
+    intermediate_png: false
+    # 结构矢量优化结果 包括初始化的PNG和SVG
+    res: false
+    # 结构矢量优化的动画
+    opt_mp4: false
+    # 结构矢量优化的中间过程的svg 每20轮存一张
+    intermediate_svg: false
+
+
+
+
+
